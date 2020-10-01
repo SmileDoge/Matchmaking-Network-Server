@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace MatchCsharp.Server.Socket.Packet
+namespace MatchCsharp.Server.Socket.Packets
 {
     public class Packet : IDisposable
     {
