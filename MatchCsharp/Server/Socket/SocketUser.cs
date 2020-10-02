@@ -1,4 +1,5 @@
-﻿using MatchCsharp.Server.Socket.Packet;
+﻿using MatchCsharp.Server.Socket;
+using MatchCsharp.Server.Socket.Packets;
 using MatchCsharp.Server.Util;
 using System;
 using System.Collections.Generic;
@@ -30,7 +31,8 @@ namespace MatchCsharp.Server
         public UserState UserState { get { return _state; } }
         #endregion
 
-
+        public delegate void PacketHandler(SocketUser user, Packet packet);
+        private Dictionary<int, PacketHandler> _packetHandlers = new Dictionary<int, PacketHandler>();
 
         public void JoinRoom(Room room)
         {
@@ -56,17 +58,35 @@ namespace MatchCsharp.Server
             {
                 _nickname = "Player " + RandomUtil.GetInt(1, 9999);
             }
+            InitializePackets();
             Console.WriteLine($"{_nickname} Connected to Server");
+        }
+
+        private void InitializePackets()
+        {
+            _packetHandlers = new Dictionary<int, PacketHandler>()
+            {
+                { (int)PacketEnum.CLIENT_DISCONNECT, ServerHandle.Disconnect},
+                { (int)PacketEnum.CLIENT_JOIN_ROOM, ServerHandle.JoinRoom},
+                { (int)PacketEnum.CLIENT_LEAVE_ROOM, ServerHandle.LeaveRoom},
+                { (int)PacketEnum.CLIENT_LIST_ROOM, ServerHandle.ListRoom},
+                { (int)PacketEnum.CLIENT_EVENT, ServerHandle.Event},
+            };
         }
 
         protected override void OnMessage(MessageEventArgs e)
         {
             if (e.IsBinary)
             {
-                var packet = new Packet(e.RawData);
-                var packet_id = packet.ReadInt();
-
-
+                var data = e.RawData;
+                using (var packet = new Packet(data))
+                {
+                    var packet_id = packet.ReadInt();
+                    if (_packetHandlers.TryGetValue(packet_id, out PacketHandler value))
+                    {
+                        value(this, packet);
+                    }
+                }
             }
         }
     }
