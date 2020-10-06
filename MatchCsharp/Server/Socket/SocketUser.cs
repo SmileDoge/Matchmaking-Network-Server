@@ -11,55 +11,47 @@ namespace MatchCsharp.Server
 {
     class SocketUser: WebSocketBehavior
     {
-        #region ID
-        private int _id;
-        public int UserID { get { return _id; } }
-        #endregion
-
-        #region Nickname
-        private string _nickname;
-        public string Nickname { get { return _nickname; } }
-        #endregion
-
-        #region Room
-        private Room _room;
-        public Room Room { get { return _room; } }
-        #endregion
-
-        #region State
-        private UserState _state = UserState.connected;
-        public UserState UserState { get { return _state; } }
-        #endregion
+        public int UserID { get; private set; }
+        public string Nickname { get; private set; }
+        public Room Room { get; private set; }
+        public UserState UserState { get; private set; }
+        
 
         public delegate void PacketHandler(SocketUser user, Packet packet);
         private Dictionary<int, PacketHandler> _packetHandlers = new Dictionary<int, PacketHandler>();
 
         public void JoinRoom(Room room)
         {
-            _room = room;
-            _state = UserState.inRoom;
-            Console.WriteLine($"Player ({_nickname}) Joined to Room ({_room.RoomName})");
+            Room = room;
+            UserState = UserState.inRoom;
+            Console.WriteLine($"Player ({Nickname}) Joined to Room ({Room.RoomName})");
         }
 
         public void LeaveRoom()
         {
-            if (_state == UserState.inRoom)
+            if (UserState == UserState.inRoom)
             {
-                _room = null;
-                _state = UserState.connected;
+                Room = null;
+                UserState = UserState.connected;
             }
+        }
+
+        public void SendPacket(Packet packet)
+        {
+            Send(packet.ToArray());
         }
 
         protected override void OnOpen()
         {
-            _id = MatchmakingServer.GenerateID();
-            _nickname = Context.QueryString["nickname"];
-            if(_nickname == null)
+            UserID = MatchmakingServer.GenerateID();
+            Nickname = Context.QueryString["nickname"];
+            if(Nickname == null)
             {
-                _nickname = "Player " + RandomUtil.GetInt(1, 9999);
+                Nickname = "Player " + RandomUtil.GetInt(1, 9999);
             }
             InitializePackets();
-            Console.WriteLine($"{_nickname} Connected to Server");
+            Server.MatchmakingServer.Users.Add(UserID, this);
+            Console.WriteLine($"{Nickname} Connected to Server");
         }
 
         private void InitializePackets()

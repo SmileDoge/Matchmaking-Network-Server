@@ -10,6 +10,7 @@ namespace MatchCsharp.Server.Socket.Packets
     {
         CLIENT_DISCONNECT = 1,
         CLIENT_JOIN_ROOM,
+        CLIENT_CREATE_ROOM,
         CLIENT_LEAVE_ROOM,
         CLIENT_LIST_ROOM,
         CLIENT_EVENT,

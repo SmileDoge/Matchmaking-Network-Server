@@ -14,13 +14,15 @@ namespace MatchCsharp.Server
 
     class MatchmakingServer
     {
-        private static Dictionary<string, Room> _rooms = new Dictionary<string, Room>();
-        private static Dictionary<int, SocketUser> _users = new Dictionary<int, SocketUser>();
+        //private static Dictionary<string, Room> _rooms = new Dictionary<string, Room>();
+        //private static Dictionary<int, SocketUser> _users = new Dictionary<int, SocketUser>();
         private static WebSocketServer _websocket;
 
         public static bool Started { get; private set; }
 
         public static int Port { get; private set; }
+        public static Dictionary<string, Room> Rooms { get; private set; }
+        public static Dictionary<int, SocketUser> Users { get; private set; }
 
         public static void Start(int port)
         {
@@ -29,6 +31,9 @@ namespace MatchCsharp.Server
             Console.WriteLine("Server Started");
 
             Started = true;
+
+            Rooms = new Dictionary<string, Room>();
+            Users = new Dictionary<int, SocketUser>();
 
             RandomUtil.Init();
 
@@ -40,7 +45,7 @@ namespace MatchCsharp.Server
         public static int GenerateID()
         {
             int id = RandomUtil.GetInt(0, 1000);
-            if(_users.ContainsKey(id)) {
+            if(Users.ContainsKey(id)) {
                 return GenerateID();
             }else{
                 return id;
@@ -52,14 +57,14 @@ namespace MatchCsharp.Server
         {
             if (Started)
             {
-                if (_rooms.ContainsKey(roomName))
+                if (Rooms.ContainsKey(roomName))
                 {
                     return null;
                 }
                 else
                 {
                     Room room = new Room(roomName, host, options);
-                    _rooms.Add(roomName, room);
+                    Rooms.Add(roomName, room);
                     host.JoinRoom(room);
                     return room;
                 }
@@ -74,7 +79,7 @@ namespace MatchCsharp.Server
         {
             if (Started)
             {
-                if (_rooms.TryGetValue(roomName, out Room room))
+                if (Rooms.TryGetValue(roomName, out Room room))
                 {
                     return room;
                 }
