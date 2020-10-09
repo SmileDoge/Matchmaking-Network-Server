@@ -38,20 +38,39 @@ namespace MatchCsharp.Server
 
         public void SendPacket(Packet packet)
         {
-            Send(packet.ToArray());
+            if (State == WebSocketState.Open)
+            {
+                Send(packet.ToArray());
+            }
         }
 
         protected override void OnOpen()
         {
             UserID = MatchmakingServer.GenerateID();
             Nickname = Context.QueryString["nickname"];
+            UserState = UserState.connected;
             if(Nickname == null)
             {
                 Nickname = "Player " + RandomUtil.GetInt(1, 9999);
             }
+            else
+            {
+                //Nickname = Nickname.Substring(0, 20);
+            }
             InitializePackets();
-            Server.MatchmakingServer.Users.Add(UserID, this);
+            MatchmakingServer.Users.Add(UserID, this);
             Console.WriteLine($"{Nickname} Connected to Server");
+            ServerSend.Connect(this);
+        }
+
+        protected override void OnClose(CloseEventArgs e)
+        {
+            Console.WriteLine($"{Nickname} Disconnected");
+            if (UserState == UserState.inRoom)
+            {
+                ServerSend.LeaveRoom(this, Room);
+                Room.Leave(this);
+            }
         }
 
         private void InitializePackets()
@@ -60,6 +79,7 @@ namespace MatchCsharp.Server
             {
                 { (int)PacketEnum.CLIENT_DISCONNECT, ServerHandle.Disconnect},
                 { (int)PacketEnum.CLIENT_JOIN_ROOM, ServerHandle.JoinRoom},
+                { (int)PacketEnum.CLIENT_CREATE_ROOM, ServerHandle.CreateRoom },
                 { (int)PacketEnum.CLIENT_LEAVE_ROOM, ServerHandle.LeaveRoom},
                 { (int)PacketEnum.CLIENT_LIST_ROOM, ServerHandle.ListRoom},
                 { (int)PacketEnum.CLIENT_EVENT, ServerHandle.Event},
@@ -70,6 +90,7 @@ namespace MatchCsharp.Server
         {
             if (e.IsBinary)
             {
+
                 var data = e.RawData;
                 using (var packet = new Packet(data))
                 {

@@ -65,7 +65,7 @@ namespace MatchCsharp.Server
                 {
                     Room room = new Room(roomName, host, options);
                     Rooms.Add(roomName, room);
-                    host.JoinRoom(room);
+                    room.Join(host);
                     return room;
                 }
             }

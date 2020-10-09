@@ -16,6 +16,7 @@ namespace MatchCsharp.Server.Socket.Packets
         CLIENT_EVENT,
 
         SERVER_JOIN_ROOM = 100,
+        SERVER_ROOM_ERROR,
         SERVER_LEAVE_ROOM,
         SERVER_LIST_ROOM,
         SERVER_EVENT,
